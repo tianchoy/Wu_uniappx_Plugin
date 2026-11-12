@@ -1,0 +1,15 @@
+id = "uniappx"
+name = "uni-app x (UVue)"
+version = "1.0.0"
+schema_version = 1
+description = "uni-app x .uvue syntax highlighting with UTS script injection."
+authors = ["Wu uni-app x plugin"]
+repository = "https://github.com/tree-sitter-grammars/tree-sitter-vue"
+
+languages = ["languages/uvue"]
+
+# 自带 tree-sitter-vue 编译产物，同事无需先安装 Vue 扩展。
+# 语法名必须是 vue：wasm 导出的函数固定为 tree_sitter_vue，改成其它名字会加载失败。
+[grammars.vue]
+repository = "https://github.com/tree-sitter-grammars/tree-sitter-vue"
+rev = "7e48557b903a9db9c38cea3b7839ef7e1f36c693"
