@@ -71,11 +71,40 @@ bash uninstall.sh
 
 这会移除扩展软链并清掉 `.uts` 映射（原始配置备份仍保留在 `settings.json.uniappx.bak`）。之后可删除插件目录，重启 Wu。
 
+## 在 Zed 中使用
+
+Wu 是 Zed 内核的衍生版，本插件用的是同一套 `extension.toml` schema，因此也能装到 Zed。
+
+> 平台差异：Zed 在构建 dev 扩展时会按 `extension.toml` 的 `repository`/`rev` **联网编译**语法；
+> 本插件自带 `grammars/vue.wasm`，所以 Zed 版脚本会复制一份插件并**去掉这两行**，强制用本地 wasm。
+> 因为用的是副本（非软链），修改源文件后请重新运行安装脚本同步。
+
+```bash
+cd /path/to/uniappx
+bash install_zed.sh
+```
+
+脚本会：
+- **自动识别系统**决定 Zed 数据目录（macOS：`~/Library/Application Support/Zed`；Linux：`~/.local/share/zed`；Windows Git Bash：`%APPDATA%/Zed`），把插件复制到其下 `extensions/dev/uniappx`，并删掉 `extension.toml` 里 `[grammars.vue]` 的 `repository` / `rev` 两行；
+- 在 Zed 的 `settings.json`（macOS/Linux：`~/.config/zed/settings.json`；Windows：`%APPDATA%/Zed/settings.json`）的 `file_types` 中幂等加入 `"TypeScript": ["uts"]`（复用 `tools/patch_settings.py`）。
+
+> 路径也可用环境变量覆盖：`ZED_DATA`（数据根）、`ZED_DEV_DIR`（dev 扩展目录）、`ZED_SETTINGS`（settings.json 路径）。例：`ZED_DATA="$HOME/.local/share/zed" bash install_zed.sh`
+> Windows 原生命令行跑不了 `.sh`，请用 **Git Bash** 或 WSL 执行。
+
+卸载：
+
+```bash
+cd /path/to/uniappx
+bash uninstall_zed.sh
+```
+
 ## 能力边界
 
 - 提供：语法高亮、括号匹配/自动闭合、缩进、代码大纲
 - 不提供：uni-app x 语言服务（LSP）、补全、跳转、类型检查、诊断、`.uvue` 文件图标
-- UTS 复用 TypeScript 语法树，个别 UTS 特有写法可能不完美；`<!-- #ifdef APP -->` 之类的条件编译注释按普通 HTML 注释处理
+- UTS 复用 TypeScript 语法树，个别 UTS 特有写法可能不完美
+- 条件编译注释 `<!-- #ifdef APP -->` / `#ifndef` / `#endif` / `#else` / `#elif` 已单独上色（紫色关键字色），与灰色普通注释区分；但不做词法拆分（整条注释作为一个单元着色）
+- `<uni-*>` / `<uv-*>` 内置组件标签已单独上色（区别于普通小写标签与 PascalCase 组件）
 - `.uts` 按 TypeScript 处理，Wu 会顺带启动 TS 语言服务，可能出现与 UTS 语法不完全匹配的诊断提示；只想要高亮可用 `--no-settings` 并在 Wu 设置里按语言关闭对应 LSP
 
 ## 来源

@@ -41,3 +41,8 @@
   "</"
   "/>"
 ] @punctuation.bracket
+
+; uni-app / uni-ui 内置组件 <uni-*>、<uv-*> 区分上色
+; 本规则位于文件末尾，优先级高于上方的 (tag_name) @tag，对匹配到的节点生效
+((tag_name) @tag.builtin
+  (#match? @tag.builtin "^(uni|uv)-"))

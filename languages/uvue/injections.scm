@@ -55,18 +55,19 @@
     (attribute_value) @content
     (#set! "language" "typescript")))
 
-; <style lang="scss" scoped> 等
-(style_element
+; <style lang="scss|less|sass|stylus|postcss|css"> 等（显式列举，避免把未知 lang 当语法去加载）
+((style_element
   (start_tag
     (attribute
-      (attribute_name) @_attr_name
-      (#eq? @_attr_name "lang")
+      (attribute_name) @_attr
       (quoted_attribute_value
         (attribute_value) @language)))
   (raw_text) @content)
+  (#eq? @_attr "lang")
+  (#any-of? @language "scss" "less" "sass" "stylus" "postcss" "css"))
 
-; <style> 无 lang
-(style_element
+; <style> 无 lang 默认 css
+((style_element
   (start_tag
     (attribute
       (attribute_name) @_attr_name)*)
