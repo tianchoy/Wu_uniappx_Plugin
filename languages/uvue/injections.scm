@@ -67,7 +67,7 @@
   (#any-of? @language "scss" "less" "sass" "stylus" "postcss" "css"))
 
 ; <style> 无 lang 默认 css
-((style_element
+(style_element
   (start_tag
     (attribute
       (attribute_name) @_attr_name)*)
