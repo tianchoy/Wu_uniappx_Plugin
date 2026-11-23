@@ -107,7 +107,32 @@ bash uninstall_zed.sh
 - HarmonyOS ArkTS（`.ets`）复用 TypeScript 语法高亮：装饰器（`@State` / `@Component` / `@Link` 等）正常着色；`struct`、`build()`、鸿蒙内置组件名（`Column` / `Text` 等）按普通标识符着色，暂无 ArkTS 专属规则
 - 条件编译注释 `<!-- #ifdef APP -->` / `#ifndef` / `#endif` / `#else` / `#elif` 已单独上色（紫色关键字色），与灰色普通注释区分；但不做词法拆分（整条注释作为一个单元着色）
 - `<uni-*>` / `<uv-*>` 内置组件标签已单独上色（区别于普通小写标签与 PascalCase 组件）
-- `.uts` / `.ets` 按 TypeScript 处理，Wu 会顺带启动 TS 语言服务，可能出现与 UTS/ArkTS 语法不完全匹配的诊断提示（如 ArkTS 全局 API 未声明）；只想要高亮可用 `--no-settings` 并在 Wu 设置里按语言关闭对应 LSP
+- `.uts` / `.ets` 按 TypeScript 处理，Wu 会顺带启动 TS 语言服务，可能出现与 UTS/ArkTS 语法不完全匹配的诊断提示，详见下节
+
+## 关于 TS 语言服务的误报（重要）
+
+`.uts` / `.ets` 被映射为 TypeScript 语言后，Wu 会启动 TS 语言服务。它能提供补全、跳转和 hover，但按 TypeScript 语义理解代码，因此会产生一批**无法消除**的误报：
+
+| 报错 | 原因 |
+| --- | --- |
+| `ts(2307) Cannot find module './foo.uts'` | TS 的模块解析只认 `.ts` / `.tsx` / `.d.ts`，不认 `.uts` 后缀 |
+| `ts(2304) Cannot find name 'UTSJSONObject'` | UTS / ArkTS 的全局类型与 `@ohos.*` 模块不在 TS 的认知范围内 |
+| `ts(2352)` 对象字面量 `as UTSJSONObject` | 对象字面量缺少 `UTSJSONObject` 的方法签名 |
+
+这些提示**只影响编辑器显示，不影响 HBuilderX / DevEco 的编译与运行**。
+
+如果觉得噪音太大，建议直接关闭 TypeScript 语言服务（对全部项目生效，一次配置，无需往业务项目里添加任何文件）：
+
+```jsonc
+// ~/.config/wu/settings.json
+"languages": {
+  "TypeScript": {
+    "enable_language_server": false
+  }
+}
+```
+
+关闭后语法高亮、缩进、括号匹配、代码大纲全部保留，仅失去补全 / 跳转 / hover。
 
 ## 来源
 
