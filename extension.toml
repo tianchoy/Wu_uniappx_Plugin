@@ -1,10 +1,10 @@
 id = "uniappx"
 name = "uni-app x (UVue)"
-version = "1.0.0"
+version = "1.2.0"
 schema_version = 1
 description = "uni-app x .uvue syntax highlighting with UTS script injection."
-authors = ["Wu uni-app x plugin"]
-repository = "https://github.com/tree-sitter-grammars/tree-sitter-vue"
+authors = ["tianchoy"]
+repository = "https://github.com/tianchoy/Wu_uniappx_Plugin"
 
 languages = ["languages/uvue"]
 

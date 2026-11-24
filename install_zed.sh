@@ -59,9 +59,16 @@ else
   cp -a "$SCRIPT_DIR" "$ZED_EXT"
 fi
 
-# 去掉 [grammars.vue] 下的 repository / rev，强制 Zed 使用本地 grammars/vue.wasm
-sed -i.bak -e '/repository = /d' -e '/^rev = /d' "$ZED_EXT/extension.toml"
-rm -f "$ZED_EXT/extension.toml.bak"
+# 只删除 [grammars.vue] 段内的 repository / rev，强制 Zed 使用本地 grammars/vue.wasm；
+# 顶层 repository 是插件自身仓库，必须保留（扩展页“访问扩展仓库”要用到）。
+awk '
+  /^\[grammars\.vue\]/ { in_vue = 1; print; next }
+  /^\[/ { in_vue = 0 }
+  in_vue && /^repository = / { next }
+  in_vue && /^rev = / { next }
+  { print }
+' "$ZED_EXT/extension.toml" > "$ZED_EXT/extension.toml.tmp"
+mv "$ZED_EXT/extension.toml.tmp" "$ZED_EXT/extension.toml"
 
 # 写入 .uts -> TypeScript 映射（复用 Wu 版 patch 脚本，仅路径不同）
 python3 "$SCRIPT_DIR/tools/patch_settings.py" install "$ZED_SETTINGS"
