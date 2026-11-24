@@ -8,8 +8,8 @@ repository = "https://github.com/tianchoy/Wu_uniappx_Plugin"
 
 languages = ["languages/uvue"]
 
-# 自带 tree-sitter-vue 编译产物，同事无需先安装 Vue 扩展。
-# 语法名必须是 vue：wasm 导出的函数固定为 tree_sitter_vue，改成其它名字会加载失败。
+# The grammar name must be "vue": the WASM exports tree_sitter_vue.
+# Zed compiles this grammar from repository/rev; local/dev installs use the bundled grammars/vue.wasm.
 [grammars.vue]
 repository = "https://github.com/tree-sitter-grammars/tree-sitter-vue"
 rev = "7e48557b903a9db9c38cea3b7839ef7e1f36c693"

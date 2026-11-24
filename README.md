@@ -1,48 +1,92 @@
-# Wu 编辑器 · uni-app x (UVue) 高亮插件
+# uni-app x (UVue) Syntax Highlighting
 
-给 Wu 编辑器增加 `.uvue` 语法高亮，并让 `.uts`（uni-app x UTS）与 `.ets`（HarmonyOS ArkTS）文件按 TypeScript 高亮。
+A Zed/Wu extension that adds syntax highlighting for uni-app x `.uvue` files and maps `.uts` (uni-app x UTS) and `.ets` (HarmonyOS ArkTS) files to TypeScript.
 
-- 适用：macOS 版 Wu（Zed 内核），已在 Wu 1.2.2 验证
-- 依赖：系统自带 `python3`（仅安装脚本用），无需联网、无需 Node/Rust
-- 插件自带 tree-sitter-vue 编译产物，**不需要**先安装 Vue 扩展
+- Works with Zed and Wu (a Zed-based editor); verified on Wu 1.2.2 and current Zed builds.
+- Ships with a prebuilt `tree-sitter-vue` grammar, so no separate Vue extension is required for local/dev installs.
+- No Node.js or Rust toolchain is needed to use it.
 
-## 安装
+## Features
 
-1. 解压 `wu-uniappx.zip`，把解压出来的 `uniappx` 文件夹放到一个**长期保留的目录**，例如：
+- `.uvue`: template tags, attributes, `{{ }}` interpolations, `:prop` / `@click` / `v-if` expressions, `<script setup lang="uts">`, and `<style lang="scss">` highlighting
+- Conditional compilation comments (`<!-- #ifdef APP -->`, `#ifndef`, `#endif`, `#else`, `#elif`) highlighted as keywords
+- `<uni-*>` and `<uv-*>` built-in component tags highlighted separately from other tags
+- Correct indentation inside `<template>`
+- Code outline listing structural blocks (`template` / `script` / `style`) and components used in the template
+- Bracket matching and auto-closing
+
+## Installation in Zed
+
+### From the extension registry
+
+Once this extension is published to the official Zed extension registry, open the Extensions view in Zed, search for **uni-app x**, and install it.
+
+> The published extension relies on the `repository` and `rev` declared in `extension.toml`; Zed compiles the Tree-sitter grammar from those sources.
+
+### Local/dev install
+
+From a checkout of this repository:
+
+```bash
+cd /path/to/Wu_uniappx_Plugin
+bash install_zed.sh
+```
+
+The script:
+
+- detects the Zed data directory for your platform (macOS: `~/Library/Application Support/Zed`; Linux: `~/.local/share/zed`; Windows Git Bash: `%APPDATA%/Zed`) and copies the extension to `extensions/dev/uniappx`;
+- removes `repository` / `rev` only from the `[grammars.vue]` section of the copied `extension.toml`, so Zed uses the bundled `grammars/vue.wasm` instead of compiling the grammar;
+- idempotently adds `"TypeScript": ["uts", "ets"]` to `file_types` in Zed's `settings.json`.
+
+Environment overrides: `ZED_DATA`, `ZED_DEV_DIR`, `ZED_SETTINGS`. Example:
+
+```bash
+ZED_DATA="$HOME/.local/share/zed" bash install_zed.sh
+```
+
+On Windows, run the script with **Git Bash** or WSL.
+
+Uninstall:
+
+```bash
+cd /path/to/Wu_uniappx_Plugin
+bash uninstall_zed.sh
+```
+
+## Installation in Wu
+
+1. Put the repository (or the extracted folder) in a permanent directory, for example:
 
    ```bash
    mkdir -p ~/.config/wu/extensions
-   # 把 uniappx 文件夹放进去，最终路径类似：
-   # ~/.config/wu/extensions/uniappx/extension.toml
+   # final path: ~/.config/wu/extensions/uniappx/extension.toml
    ```
 
-   > 不要放在「下载」里随后删掉：Wu 通过软链指向这个目录，目录被删插件即失效。
+   Do not place it in Downloads and delete it later: Wu loads the extension through a symlink to this directory.
 
-2. 执行安装脚本：
+2. Run the installer:
 
    ```bash
    cd ~/.config/wu/extensions/uniappx
    bash install.sh
    ```
 
-   脚本会做两件事：
-   - 在 `~/Library/Application Support/Wu/extensions/installed/uniappx` 创建软链（Wu 把软链识别为本地 dev 扩展，启动时自动加载）
-   - 在 `~/.config/wu/settings.json` 的 `file_types` 中幂等加入 `"TypeScript": ["uts", "ets"]`，并把原配置备份为 `settings.json.uniappx.bak`
+   It creates `~/Library/Application Support/Wu/extensions/installed/uniappx` as a symlink and adds `"TypeScript": ["uts", "ets"]` to `~/.config/wu/settings.json`. The original settings file is backed up as `settings.json.uniappx.bak`.
 
-   如果不想让脚本改配置，用 `bash install.sh --no-settings`，然后按下面「手动配置 .uts / .ets」操作。
+   Use `bash install.sh --no-settings` to skip the settings change and configure file types yourself.
 
-3. 完全退出 Wu（`Cmd+Q`）再打开；运行中 Wu 通常也会自动热重载。
+3. Restart Wu (`Cmd+Q` then reopen).
 
-## 验证
+Uninstall:
 
-- 打开任意 `.uvue` 文件，右下角语言应显示 **UVue**
-- `<template>` 标签/属性、`{{ }}` 插值、`:prop` / `@click` / `v-if` 表达式、`<script setup lang="uts">` 里的代码、`<style lang="scss">` 都应有颜色
-- 打开 `.uts` 文件，语言显示 **TypeScript**
-- 打开 `.ets` 文件（HarmonyOS ArkTS），语言显示 **TypeScript**
+```bash
+cd ~/.config/wu/extensions/uniappx
+bash uninstall.sh
+```
 
-## 手动配置 .uts / .ets（使用 `--no-settings` 时）
+## Manual file type configuration
 
-在 `~/.config/wu/settings.json` 里加一段（已有 `file_types` 就合并进去）：
+If you used `--no-settings`, or prefer to configure file types yourself, add this to the editor's `settings.json` (merge it into an existing `file_types` object):
 
 ```jsonc
 "file_types": {
@@ -50,81 +94,48 @@
 }
 ```
 
-## 可选配置
+Settings paths:
 
-- Wu 使用自定义数据目录时，给脚本指定扩展目录：
-  `WU_EXTENSIONS_DIR="/your/path/extensions/installed" bash install.sh`
-- 想改高亮规则：编辑 `languages/uvue/injections.scm`，重启 Wu 生效。
+- Wu: `~/.config/wu/settings.json`
+- Zed (macOS/Linux): `~/.config/zed/settings.json`
+- Zed (Windows): `%APPDATA%/Zed/settings.json`
 
-## 故障排查
+## Verification
 
-- **没高亮**：先重启 Wu；再看日志 `~/Library/Logs/Wu/Wu.log` 里是否有 `failed to load language UVue`。
-- **日志报 grammar 实例化失败 / Wu 版本差异**：本机 Vue 扩展可兜底。先在 Wu 扩展页安装官方 **Vue** 扩展，然后删除本插件的 `grammars/` 目录，并把 `extension.toml` 末尾的 `[grammars.vue]` 整段（含 repository/rev 两行）删掉；`languages/uvue/config.toml` 里的 `grammar = "vue"` 保持不变，重启 Wu 即可改为复用官方语法。
-- **不要**在 Wu 扩展页点 `Rebuild Dev Extension`：那会按 `extension.toml` 里的仓库地址联网重新编译语法，本插件不需要。
-- **已有同名 `uniappx` 目录**：`install.sh` 会拒绝覆盖，先手动备份该目录。
+- Open a `.uvue` file: the language shown in the status bar should be **UVue**, and template/script/style content should be colored.
+- Open a `.uts` or `.ets` file: the language should be **TypeScript**.
 
-## 卸载
+## Scope and limitations
 
-```bash
-cd ~/.config/wu/extensions/uniappx
-bash uninstall.sh
-```
+Provided:
 
-这会移除扩展软链并清掉 `.uts` / `.ets` 映射（原始配置备份仍保留在 `settings.json.uniappx.bak`）。之后可删除插件目录，重启 Wu。
+- syntax highlighting, bracket matching / auto-closing, indentation, and code outline
 
-## 在 Zed 中使用
+Not provided:
 
-Wu 是 Zed 内核的衍生版，本插件用的是同一套 `extension.toml` schema，因此也能装到 Zed。
+- uni-app x or ArkTS language services (LSP), completion, go-to-definition, type checking, diagnostics, or `.uvue` file icons
 
-> 平台差异：Zed 在构建 dev 扩展时会按 `extension.toml` 的 `repository`/`rev` **联网编译**语法；
-> 本插件自带 `grammars/vue.wasm`，所以 Zed 版脚本会复制一份插件并**去掉这两行**，强制用本地 wasm。
-> 因为用的是副本（非软链），修改源文件后请重新运行安装脚本同步。
+Additional notes:
 
-```bash
-cd /path/to/uniappx
-bash install_zed.sh
-```
+- UTS and ArkTS are highlighted using the TypeScript grammar; language-specific constructs may not be perfectly represented.
+- ArkTS decorators such as `@State`, `@Component`, and `@Link` are colored normally; `struct`, `build()`, and built-in UI component names (`Column`, `Text`, etc.) are highlighted as ordinary identifiers.
+- Conditional compilation comments are colored as a whole; they are not split into lexical tokens.
 
-脚本会：
-- **自动识别系统**决定 Zed 数据目录（macOS：`~/Library/Application Support/Zed`；Linux：`~/.local/share/zed`；Windows Git Bash：`%APPDATA%/Zed`），把插件复制到其下 `extensions/dev/uniappx`，并删掉 `extension.toml` 里 `[grammars.vue]` 的 `repository` / `rev` 两行；
-- 在 Zed 的 `settings.json`（macOS/Linux：`~/.config/zed/settings.json`；Windows：`%APPDATA%/Zed/settings.json`）的 `file_types` 中幂等加入 `"TypeScript": ["uts", "ets"]`（复用 `tools/patch_settings.py`）。
+### TypeScript diagnostics on `.uts` / `.ets`
 
-> 路径也可用环境变量覆盖：`ZED_DATA`（数据根）、`ZED_DEV_DIR`（dev 扩展目录）、`ZED_SETTINGS`（settings.json 路径）。例：`ZED_DATA="$HOME/.local/share/zed" bash install_zed.sh`
-> Windows 原生命令行跑不了 `.sh`，请用 **Git Bash** 或 WSL 执行。
+Mapping `.uts` and `.ets` to TypeScript also starts the editor's TypeScript language server. It understands standard TypeScript, but not uni-app x / ArkTS-specific syntax and APIs, so some diagnostics cannot be eliminated:
 
-卸载：
-
-```bash
-cd /path/to/uniappx
-bash uninstall_zed.sh
-```
-
-## 能力边界
-
-- 提供：语法高亮、括号匹配/自动闭合、缩进、代码大纲
-- 不提供：uni-app x 语言服务（LSP）、补全、跳转、类型检查、诊断、`.uvue` 文件图标
-- UTS 复用 TypeScript 语法树，个别 UTS 特有写法可能不完美
-- HarmonyOS ArkTS（`.ets`）复用 TypeScript 语法高亮：装饰器（`@State` / `@Component` / `@Link` 等）正常着色；`struct`、`build()`、鸿蒙内置组件名（`Column` / `Text` 等）按普通标识符着色，暂无 ArkTS 专属规则
-- 条件编译注释 `<!-- #ifdef APP -->` / `#ifndef` / `#endif` / `#else` / `#elif` 已单独上色（紫色关键字色），与灰色普通注释区分；但不做词法拆分（整条注释作为一个单元着色）
-- `<uni-*>` / `<uv-*>` 内置组件标签已单独上色（区别于普通小写标签与 PascalCase 组件）
-- `.uts` / `.ets` 按 TypeScript 处理，Wu 会顺带启动 TS 语言服务，可能出现与 UTS/ArkTS 语法不完全匹配的诊断提示，详见下节
-
-## 关于 TS 语言服务的误报（重要）
-
-`.uts` / `.ets` 被映射为 TypeScript 语言后，Wu 会启动 TS 语言服务。它能提供补全、跳转和 hover，但按 TypeScript 语义理解代码，因此会产生一批**无法消除**的误报：
-
-| 报错 | 原因 |
+| Diagnostic | Cause |
 | --- | --- |
-| `ts(2307) Cannot find module './foo.uts'` | TS 的模块解析只认 `.ts` / `.tsx` / `.d.ts`，不认 `.uts` 后缀 |
-| `ts(2304) Cannot find name 'UTSJSONObject'` | UTS / ArkTS 的全局类型与 `@ohos.*` 模块不在 TS 的认知范围内 |
-| `ts(2352)` 对象字面量 `as UTSJSONObject` | 对象字面量缺少 `UTSJSONObject` 的方法签名 |
+| `ts(2307) Cannot find module './foo.uts'` | TypeScript's module resolver does not recognize `.uts` paths |
+| `ts(2304) Cannot find name 'UTSJSONObject'` | UTS/ArkTS globals and `@ohos.*` modules are unknown to TypeScript |
+| `ts(2352)` object literal `as UTSJSONObject` | The object literal does not provide `UTSJSONObject` method signatures |
 
-这些提示**只影响编辑器显示，不影响 HBuilderX / DevEco 的编译与运行**。
+These messages **only affect editor display**; they do not affect HBuilderX or DevEco compilation and runtime.
 
-如果觉得噪音太大，建议直接关闭 TypeScript 语言服务（对全部项目生效，一次配置，无需往业务项目里添加任何文件）：
+If the noise is too high, disable the TypeScript language server once in your editor settings (applies to all projects; no per-project type shims are required):
 
 ```jsonc
-// ~/.config/wu/settings.json
 "languages": {
   "TypeScript": {
     "enable_language_server": false
@@ -132,8 +143,17 @@ bash uninstall_zed.sh
 }
 ```
 
-关闭后语法高亮、缩进、括号匹配、代码大纲全部保留，仅失去补全 / 跳转 / hover。
+Syntax highlighting, indentation, brackets, and outline remain available; completion, go-to-definition, and hover are disabled.
 
-## 来源
+## Troubleshooting
 
-语法解析使用 `tree-sitter-vue`（MIT），rev `7e48557b903a9db9c38cea3b7839ef7e1f36c693`；查询文件在 Zed/Vue 扩展查询基础上补充了 UTS 注入规则。
+- **No highlighting**: restart the editor first. For Wu, check `~/Library/Logs/Wu/Wu.log` for `failed to load language UVue`.
+- **Grammar instantiation failures / editor version differences**: install the official Vue extension from the editor's extension marketplace, delete this extension's `grammars/` directory, and remove the whole `[grammars.vue]` section from `extension.toml`. Keep `grammar = "vue"` in `languages/uvue/config.toml`, then restart. This makes the extension reuse the official grammar.
+- **Do not** click `Rebuild Dev Extension` in Wu's extension page: it would try to rebuild the grammar from the repository URL, which this local/dev setup does not need.
+- **An `uniappx` directory already exists**: `install.sh` refuses to overwrite it; back it up manually first.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+Syntax parsing uses [`tree-sitter-vue`](https://github.com/tree-sitter-grammars/tree-sitter-vue) (MIT), revision `7e48557b903a9db9c38cea3b7839ef7e1f36c693`. The queries are based on Zed/Vue extension queries with UTS injection rules added.
